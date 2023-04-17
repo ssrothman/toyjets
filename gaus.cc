@@ -2,12 +2,11 @@
 #include "common.h"
 #include <random>
 #include <stdio.h>
-#include <math>
 
 static std::default_random_engine generator;
 
 
-bool gausJet(unsigned nPart, jet& jetout,
+void gausJet(unsigned nPart, jet& jetout,
                              float ptscale,
                              float angscale,
                              float ptsmear){
@@ -17,19 +16,23 @@ bool gausJet(unsigned nPart, jet& jetout,
     jetout.phi.resize(nPart);
     jetout.pt.resize(nPart);
 
-    rng = std::normal_distribution(0, angscale);
-    smear = std::normal_distribution(1, ptsmear);
+    std::normal_distribution<float> rng(0, angscale);
+    std::normal_distribution<float> smear(1, ptsmear);
 
     for(unsigned i=0; i<nPart; ++i){
-        eta[i] = rng(generator);
-        phi[i] = rng(generator);
-        pt[i] = normal_pdf(eta[i]) * normal_pdf(phi[i]) * smear(generator);
-        sumpt += pt[i];
+        jetout.eta[i] = rng(generator);
+        jetout.phi[i] = rng(generator);
+        jetout.pt[i] = std::max(normal_pdf(jetout.eta[i], 0, angscale) *
+                                normal_pdf(jetout.phi[i], 0, angscale) * 
+                                smear(generator), 
+                                0.0001f);
+        jetout.sumpt += jetout.pt[i];
     }
 
     float rescale = ptscale;
+    jetout.sumpt *= rescale;
     for (unsigned i=0; i<nPart; ++i){
-        pt[i] *= rescale;
+        jetout.pt[i] *= rescale;
     }
 }
 
