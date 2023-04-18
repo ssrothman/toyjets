@@ -29,7 +29,7 @@ void gausJet(unsigned nPart, jet& jetout,
         jetout.sumpt += jetout.pt[i];
     }
 
-    float rescale = ptscale;
+    float rescale = ptscale/jetout.sumpt;
     jetout.sumpt *= rescale;
     for (unsigned i=0; i<nPart; ++i){
         jetout.pt[i] *= rescale;
