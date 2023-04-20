@@ -4,7 +4,7 @@
 #include "common.h"
 #include <armadillo>
 
-arma::fmat genJet(const jet& recojet, jet& jetout,
+arma::mat genJet(const jet& recojet, jet& jetout,
                                 float ptsmear=0.05,  //multiplicative
                                 float etasmear=0.05, //additive
                                 float phismear=0.05, //additive

@@ -24,7 +24,7 @@ void makegenpart(float recopt, float recoeta, float recophi,
     genphi = recophi + norm(generator) * phismear;
 }
 
-arma::fmat genJet(const jet& recojet, jet& jetout,
+arma::mat genJet(const jet& recojet, jet& jetout,
                                      float ptsmear,
                                      float etasmear,
                                      float phismear,
@@ -126,7 +126,7 @@ arma::fmat genJet(const jet& recojet, jet& jetout,
     }
 
     //make particle transfer matrix
-    arma::fmat result(recojet.nPart, jetout.nPart, arma::fill::zeros);
+    arma::mat result(recojet.nPart, jetout.nPart, arma::fill::zeros);
     for(unsigned iGen=0; iGen<jetout.nPart; ++iGen){
         auto ip = std::unique(from[iGen].begin(), from[iGen].end());
         from[iGen].resize(std::distance(from[iGen].begin(), ip));
@@ -135,12 +135,12 @@ arma::fmat genJet(const jet& recojet, jet& jetout,
         }
     }
 
-    arma::fvec rowsum = arma::sum(result, 1);
+    arma::vec rowsum = arma::sum(result, 1);
     rowsum.replace(0.0f, 1.0f);
-    arma::fvec rowfactor = arma::fvec(recojet.pt) / rowsum;
+    arma::vec rowfactor = arma::vec(std::vector<double>(recojet.pt.begin(), recojet.pt.end())) / rowsum;
     result.each_col() %= rowfactor;
 
-    arma::frowvec colfactor(jetout.pt);
+    arma::rowvec colfactor(std::vector<double>(jetout.pt.begin(), jetout.pt.end()));
     colfactor.replace(0.0f, 1.0f);
     result.each_row() /= colfactor;
 
