@@ -2,8 +2,9 @@
 #include "common.h"
 #include <random>
 #include <stdio.h>
+#include <chrono>
 
-static std::default_random_engine generator;
+static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
 
 
 void gausJet(unsigned nPart, jet& jetout,
