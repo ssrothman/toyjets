@@ -8,32 +8,33 @@ static std::default_random_engine generator(std::chrono::system_clock::now().tim
 
 
 void gausJet(unsigned nPart, jet& jetout,
-                             float ptscale,
-                             float angscale,
-                             float ptsmear){
+                             double ptscale,
+                             double angscale,
+                             double ptsmear){
     jetout.sumpt = 0;
     jetout.nPart = nPart;
-    jetout.eta.resize(nPart);
-    jetout.phi.resize(nPart);
-    jetout.pt.resize(nPart);
+    jetout.particles.resize(nPart);
 
-    std::normal_distribution<float> rng(0, angscale);
-    std::normal_distribution<float> smear(1, ptsmear);
+    std::normal_distribution<double> rng(0, angscale);
+    std::normal_distribution<double> smear(1, ptsmear);
 
     for(unsigned i=0; i<nPart; ++i){
-        jetout.eta[i] = rng(generator);
-        jetout.phi[i] = rng(generator);
-        jetout.pt[i] = std::max(normal_pdf(jetout.eta[i], 0, angscale) *
-                                normal_pdf(jetout.phi[i], 0, angscale) * 
+        jetout.particles[i].eta = rng(generator);
+        jetout.particles[i].phi = rng(generator);
+        jetout.particles[i].pt = std::max(normal_pdf(jetout.particles[i].eta, 0, angscale) *
+                                normal_pdf(jetout.particles[i].phi, 0, angscale) * 
                                 smear(generator), 
-                                0.0001f);
-        jetout.sumpt += jetout.pt[i];
+                                0.0001);
+        jetout.particles[i].dpt = ptsmear * jetout.particles[i].pt;
+        jetout.particles[i].dphi = 0.1;
+        jetout.particles[i].deta = 0.1;
+        jetout.sumpt += jetout.particles[i].pt;
     }
 
-    float rescale = ptscale/jetout.sumpt;
+    double rescale = ptscale/jetout.sumpt;
     jetout.sumpt *= rescale;
     for (unsigned i=0; i<nPart; ++i){
-        jetout.pt[i] *= rescale;
+        jetout.particles[i].pt *= rescale;
     }
 }
 

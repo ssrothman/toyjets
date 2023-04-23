@@ -5,13 +5,13 @@
 #include <armadillo>
 
 arma::mat genJet(const jet& recojet, jet& jetout,
-                                float ptsmear=0.05,  //multiplicative
-                                float etasmear=0.05, //additive
-                                float phismear=0.05, //additive
-                                float psplit=0.10,   //probability
-                                float pmerge=0.02,   //probability
-                                float ppu=0.10,      //probability
-                                float pmiss=0.10,    //probability
-                                float mergethreshold=0.05); //dR
+                                double ptsmear=0.05,  //multiplicative
+                                double etasmear=0.05, //additive
+                                double phismear=0.05, //additive
+                                double psplit=0.10,   //probability
+                                double pmerge=0.02,   //probability
+                                double ppu=0.10,      //probability
+                                double pmiss=0.10,    //probability
+                                double mergethreshold=0.05); //dR
 
 #endif 

@@ -5,46 +5,41 @@
 #include <chrono>
 
 static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
-static std::uniform_real_distribution<float> prob(0.0f, 1.0f);
-static std::normal_distribution<float> norm(0.0f, 1.0f);
+static std::uniform_real_distribution<double> prob(0.0f, 1.0f);
+static std::normal_distribution<double> norm(0.0f, 1.0f);
 
-bool check(float p){
+bool check(double p){
     return prob(generator) < p;
 }
 
-float square(float x){
+double square(double x){
     return x*x;
 }
 
-void makegenpart(float recopt, float recoeta, float recophi,
-                 float& genpt, float& geneta, float& genphi,
-                 float ptsmear, float etasmear, float phismear){
-    genpt = std::max(recopt * (norm(generator) * ptsmear + 1), 0.0001f);
+void makegenpart(double recopt, double recoeta, double recophi,
+                 double& genpt, double& geneta, double& genphi,
+                 double ptsmear, double etasmear, double phismear){
+    genpt = std::max(recopt * (norm(generator) * ptsmear + 1), 0.0001);
     geneta = recoeta + norm(generator) * etasmear;
     genphi = recophi + norm(generator) * phismear;
 }
 
 arma::mat genJet(const jet& recojet, jet& jetout,
-                                     float ptsmear,
-                                     float etasmear,
-                                     float phismear,
-                                     float psplit,
-                                     float pmerge,
-                                     float ppu,
-                                     float pmiss,
-                                     float mergethreshold){
+                                     double ptsmear,
+                                     double etasmear,
+                                     double phismear,
+                                     double psplit,
+                                     double pmerge,
+                                     double ppu,
+                                     double pmiss,
+                                     double mergethreshold){
     std::geometric_distribution<int> geom(1-psplit);
     std::geometric_distribution<int> geom2(1-pmiss);
 
     jetout.sumpt=0;
 
-    jetout.eta.clear();
-    jetout.phi.clear();
-    jetout.pt.clear();
-
-    jetout.eta.reserve(recojet.nPart);
-    jetout.phi.reserve(recojet.nPart);
-    jetout.pt.reserve(recojet.nPart);
+    jetout.particles.clear();
+    jetout.particles.reserve(recojet.nPart);
 
     std::vector<std::vector<unsigned>> from(0);
     for(unsigned i=0; i<recojet.nPart; ++i){//for each particle in the reco jet
@@ -54,8 +49,8 @@ arma::mat genJet(const jet& recojet, jet& jetout,
 
         //add particles to genjet
         int nsplit = geom(generator)+1;
-        std::vector<float> fracs(nsplit, 0);
-        float sumfrac=0;
+        std::vector<double> fracs(nsplit, 0);
+        double sumfrac=0;
         for(unsigned isplit=0; isplit<nsplit; ++isplit){
             fracs[isplit] = prob(generator);
             sumfrac += fracs[isplit];
@@ -63,13 +58,11 @@ arma::mat genJet(const jet& recojet, jet& jetout,
         for(unsigned isplit=0; isplit<nsplit; ++isplit){
             fracs[isplit]/=sumfrac;
 
-            float pt, eta, phi;
-            makegenpart(recojet.pt[i]*fracs[isplit], recojet.eta[i], recojet.phi[i],
+            double pt, eta, phi;
+            makegenpart(recojet.particles[i].pt*fracs[isplit], recojet.particles[i].eta, recojet.particles[i].phi,
                         pt, eta, phi,
                         ptsmear, etasmear, phismear);
-            jetout.pt.emplace_back(pt);
-            jetout.eta.emplace_back(eta);
-            jetout.phi.emplace_back(phi);
+            jetout.particles.emplace_back(pt, eta, phi, 0, 0, 0, 0, 0);
             jetout.nPart += 1;
             jetout.sumpt += pt;
             from.emplace_back(std::vector<unsigned>(1, i));
@@ -86,15 +79,15 @@ arma::mat genJet(const jet& recojet, jet& jetout,
             if(todelete[j]){
                 continue;
             }
-            float dR = std::sqrt(square(jetout.eta[i] - jetout.eta[j]) +
-                                 square(jetout.phi[i] - jetout.phi[j]) );
+            double dR = std::sqrt(square(jetout.particles[i].eta - jetout.particles[j].eta) +
+                                 square(jetout.particles[i].phi - jetout.particles[j].phi));
             if(dR < mergethreshold && check(pmerge)){
-                float pt = jetout.pt[i] + jetout.pt[j];
-                float pt1 = jetout.pt[i]/pt;
-                float pt2 = jetout.pt[j]/pt;
-                jetout.pt[i] = pt;
-                jetout.eta[i] = jetout.eta[i]*pt1 + jetout.eta[j]*pt2;
-                jetout.phi[i] = jetout.phi[i]*pt1 + jetout.phi[j]*pt2;
+                double pt = jetout.particles[i].pt + jetout.particles[j].pt;
+                double pt1 = jetout.particles[i].pt/pt;
+                double pt2 = jetout.particles[j].pt/pt;
+                jetout.particles[i].pt = pt;
+                jetout.particles[i].eta = jetout.particles[i].eta*pt1 + jetout.particles[j].eta*pt2;
+                jetout.particles[i].phi = jetout.particles[i].phi*pt1 + jetout.particles[j].phi*pt2;
                 from[i].emplace_back(from[j][0]);
 
                 todelete[j] = true;
@@ -105,9 +98,7 @@ arma::mat genJet(const jet& recojet, jet& jetout,
     //delete merged particles
     for(int i=jetout.nPart-1; i>=0; --i){
         if(todelete[i]){
-            jetout.pt.erase(jetout.pt.begin()+i);
-            jetout.eta.erase(jetout.eta.begin()+i);
-            jetout.phi.erase(jetout.phi.begin()+i);
+            jetout.particles.erase(jetout.particles.begin()+i);
             from.erase(from.begin()+i);
             jetout.nPart-=1;
         }
@@ -116,10 +107,9 @@ arma::mat genJet(const jet& recojet, jet& jetout,
     //add non-reconstructed particles
     int nmiss = geom2(generator);
     for(unsigned i=0; i<nmiss; ++i){
-        float nextPt = std::max(norm(generator)+1, 0.0f);
-        jetout.pt.push_back(nextPt);
-        jetout.eta.push_back(norm(generator));
-        jetout.phi.push_back(norm(generator));
+        double nextPt = std::max(norm(generator)+1, 0.0);
+        jetout.particles.emplace_back(nextPt, norm(generator), norm(generator), 
+                            0, 0, 0, 0, 0);
         from.push_back(std::vector<unsigned>(0));
         jetout.nPart+=1;
         jetout.sumpt += nextPt;
@@ -135,16 +125,36 @@ arma::mat genJet(const jet& recojet, jet& jetout,
         }
     }
 
+    printf("NO NORM\n");
+    std::cout << result;
     arma::vec rowsum = arma::sum(result, 1);
     rowsum.replace(0.0f, 1.0f);
-    arma::vec rowfactor = arma::vec(std::vector<double>(recojet.pt.begin(), recojet.pt.end())) / rowsum;
+    arma::vec rowfactor(recojet.nPart, arma::fill::none); 
+    for(unsigned i=0; i<recojet.nPart; ++i){
+        rowfactor(i) = recojet.particles[i].pt;
+    }
+    rowfactor/=rowsum;
+    printf("rowfactor\n");
+    std::cout << rowfactor;
     result.each_col() %= rowfactor;
+    printf("new A\n");
+    std::cout << result;
 
-    arma::rowvec colfactor(std::vector<double>(jetout.pt.begin(), jetout.pt.end()));
+    arma::rowvec colfactor(jetout.nPart);
+    for(unsigned i=0; i<jetout.nPart; ++i){
+        colfactor(i) = jetout.particles[i].pt;
+    }
     colfactor.replace(0.0f, 1.0f);
+    printf("colfactor\n");
+    std::cout << colfactor;
     result.each_row() /= colfactor;
+    printf("new A\n");
+    std::cout << result;
 
     result *= jetout.sumpt / recojet.sumpt;
+    printf("norm factor %0.3f\n", jetout.sumpt / recojet.sumpt);
+    printf("final A\n");
+    std::cout << result;
 
     return result;
 }//end genJet()
