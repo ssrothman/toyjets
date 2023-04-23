@@ -125,8 +125,6 @@ arma::mat genJet(const jet& recojet, jet& jetout,
         }
     }
 
-    printf("NO NORM\n");
-    std::cout << result;
     arma::vec rowsum = arma::sum(result, 1);
     rowsum.replace(0.0f, 1.0f);
     arma::vec rowfactor(recojet.nPart, arma::fill::none); 
@@ -134,27 +132,16 @@ arma::mat genJet(const jet& recojet, jet& jetout,
         rowfactor(i) = recojet.particles[i].pt;
     }
     rowfactor/=rowsum;
-    printf("rowfactor\n");
-    std::cout << rowfactor;
     result.each_col() %= rowfactor;
-    printf("new A\n");
-    std::cout << result;
 
     arma::rowvec colfactor(jetout.nPart);
     for(unsigned i=0; i<jetout.nPart; ++i){
         colfactor(i) = jetout.particles[i].pt;
     }
     colfactor.replace(0.0f, 1.0f);
-    printf("colfactor\n");
-    std::cout << colfactor;
     result.each_row() /= colfactor;
-    printf("new A\n");
-    std::cout << result;
 
     result *= jetout.sumpt / recojet.sumpt;
-    printf("norm factor %0.3f\n", jetout.sumpt / recojet.sumpt);
-    printf("final A\n");
-    std::cout << result;
 
     return result;
 }//end genJet()
