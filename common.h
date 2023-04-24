@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <math.h>
+#include <armadillo>
 
 struct particle{
     double pt, eta, phi;
@@ -28,6 +29,14 @@ struct jet{
     unsigned nPart;
     std::vector<particle> particles;
     double sumpt;
+
+    arma::vec ptvec(){
+        arma::vec ans(nPart, arma::fill::none);
+        for(unsigned i=0; i<nPart; ++i){
+            ans(i) = particles[i].pt;
+        }
+        return ans;
+    }
 };
 
 constexpr double inv_sqrt_2pi = 1/sqrt(M_PI);
