@@ -107,7 +107,7 @@ arma::mat genJet(const jet& recojet, jet& jetout,
     //add non-reconstructed particles
     int nmiss = geom2(generator);
     for(unsigned i=0; i<nmiss; ++i){
-        double nextPt = std::max(norm(generator)+1, 0.0);
+        double nextPt = std::max(0.1, 0.0);
         jetout.particles.emplace_back(nextPt, norm(generator), norm(generator), 
                             0, 0, 0, 0, 0);
         from.push_back(std::vector<unsigned>(0));
