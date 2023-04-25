@@ -48,7 +48,7 @@ arma::mat genJet(const jet& recojet, jet& jetout,
         }
 
         //add particles to genjet
-        int nsplit = geom(generator)+1;
+        unsigned nsplit = geom(generator)+1;
         std::vector<double> fracs(nsplit, 0);
         double sumfrac=0;
         for(unsigned isplit=0; isplit<nsplit; ++isplit){
@@ -105,7 +105,7 @@ arma::mat genJet(const jet& recojet, jet& jetout,
     }
 
     //add non-reconstructed particles
-    int nmiss = geom2(generator);
+    unsigned nmiss = geom2(generator);
     for(unsigned i=0; i<nmiss; ++i){
         double nextPt = std::max(0.1, 0.0);
         jetout.particles.emplace_back(nextPt, norm(generator), norm(generator), 
