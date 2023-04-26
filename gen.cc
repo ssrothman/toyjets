@@ -1,8 +1,8 @@
-#include "gen.h"
 #include <random>
 #include <armadillo>
 #include <stdio.h>
 #include <chrono>
+#include "gen.h"
 
 static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
 static std::uniform_real_distribution<double> prob(0.0f, 1.0f);

@@ -1,5 +1,4 @@
 #include "gaus.h"
-#include "common.h"
 #include <random>
 #include <stdio.h>
 #include <chrono>
