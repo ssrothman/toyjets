@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <math.h>
+#include "SRothman/armadillo-12.2.0/include/armadillo"
 
 struct particle{
     double pt, eta, phi;
@@ -31,6 +32,8 @@ struct jet{
     double pt, eta, phi;
     unsigned iJet;
 };
+
+arma::vec get_jet_pts(const jet& j);
 
 constexpr double inv_sqrt_2pi = 0.3989422804014327;
 inline double normal_pdf(double x, double m, double s){
